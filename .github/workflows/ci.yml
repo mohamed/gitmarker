@@ -57,6 +57,13 @@ jobs:
             platform: windows
             artifact: build/windows/x64/runner/Release
     runs-on: ${{ matrix.os }}
+    # The Android upload key, if the repository has it as secrets (see
+    # CONTRIBUTING.md). Pull requests from forks never get secrets.
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - if: matrix.target == 'linux'
@@ -76,6 +83,17 @@ jobs:
       # All platforms: flutter_launcher_icons expects every configured one.
       - run: flutter create --empty --org com .
       - run: dart run flutter_launcher_icons
+      # Release signing for the APK; without the secrets it stays unsigned.
+      - if: matrix.target == 'apk' && env.ANDROID_KEYSTORE_BASE64 != ''
+        shell: bash
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          {
+            echo "storeFile=upload-keystore.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > android/key.properties
       - if: matrix.target != 'ios'
         run: flutter build ${{ matrix.target }} --release
       - if: matrix.target == 'ios'
@@ -89,7 +107,9 @@ jobs:
           case "${{ matrix.target }}" in
             linux) tar -czf dist/gitmarker-linux-x64.tar.gz -C "$(dirname "${{ matrix.artifact }}")" \
                      --transform 's,^bundle,gitmarker,' bundle ;;
-            apk) cp "${{ matrix.artifact }}" dist/gitmarker-android.apk ;;
+            apk) if [ -f android/key.properties ]; then apk=gitmarker-android.apk
+                 else apk=gitmarker-android-unsigned.apk; fi
+                 cp "${{ matrix.artifact }}" "dist/$apk" ;;
             macos) ditto -c -k --sequesterRsrc --keepParent "${{ matrix.artifact }}" dist/gitmarker-macos.zip ;;
             ios) ditto -c -k --sequesterRsrc --keepParent "${{ matrix.artifact }}" dist/gitmarker-ios-unsigned.zip ;;
             windows) pwsh -Command "Compress-Archive -Path '${{ matrix.artifact }}/*' -DestinationPath dist/gitmarker-windows-x64.zip" ;;
