@@ -1,0 +1,20 @@
+GitMarker keeps your notes as plain Markdown files in a Git repository, with an interface in the style of Google Keep. Every change is a commit, and syncing is ordinary Git: with GitHub, GitLab, your own server or no server at all.
+
+Notes
+* A masonry grid of notes you can pin, colour, label, move into folders and delete (with Undo)
+* Search, and filters by folder, label and colour
+* Checklists you can tick right on the card
+* Markdown preview: headings, lists, quotes, code, bold, italic, links and TeX math
+* Arabic, Chinese and mixed scripts, each line in its own direction
+
+Git
+* Every create, edit, move and delete is a commit
+* Sync over HTTPS (personal access token) or SSH (key file); unencrypted connections are refused
+* Fast-forward, push, or rebase your changes onto the remote; on a conflict, choose to keep the remote version, push yours, or leave both
+* Browse the history of each note, copy from any version, and go back to the latest
+* Works with existing repositories: every .md file is found
+
+Your notes stay yours
+* Ordinary Markdown files you can open with any editor, and an ordinary Git repository
+* Works offline; nothing is collected or sent anywhere except to the Git server you choose
+* Open source (BSD 3-Clause), with no tracking and no ads

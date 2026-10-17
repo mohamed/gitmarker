@@ -1,0 +1,104 @@
+name: CI
+
+# Pull requests run CI once (on the PR); pushes only on main; other
+# workflows (release.yml) reuse it.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pinned: the generated platform files, the Android SDK levels
+          # (target 36, min 24) and the NDK (r28, 16 KB pages) follow it.
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter create --empty --org com --platforms=linux .
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test
+      # SSH transport against a throwaway local sshd the test starts.
+      - run: sudo apt-get update && sudo apt-get install -y openssh-server
+      - run: sudo mkdir -p /run/sshd
+      - run: flutter test test/network/ssh_test.dart --run-skipped
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            platform: linux
+            artifact: build/linux/x64/release/bundle
+          - os: ubuntu-latest
+            target: apk
+            platform: android
+            artifact: build/app/outputs/flutter-apk/app-release.apk
+          - os: macos-latest
+            target: macos
+            platform: macos
+            artifact: build/macos/Build/Products/Release/GitMarker.app
+          - os: macos-latest
+            target: ios
+            platform: ios
+            artifact: build/ios/iphoneos/Runner.app
+          - os: windows-latest
+            target: windows
+            platform: windows
+            artifact: build/windows/x64/runner/Release
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - if: matrix.target == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgtk-3-dev
+      - if: matrix.target == 'apk'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pinned: the generated platform files, the Android SDK levels
+          # (target 36, min 24) and the NDK (r28, 16 KB pages) follow it.
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      # All platforms: flutter_launcher_icons expects every configured one.
+      - run: flutter create --empty --org com .
+      - run: dart run flutter_launcher_icons
+      - if: matrix.target != 'ios'
+        run: flutter build ${{ matrix.target }} --release
+      - if: matrix.target == 'ios'
+        run: flutter build ios --release --no-codesign
+      # One archive per platform, made here because artifact uploads drop
+      # executable bits and symlinks (the Linux binary, the .app bundles).
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist
+          case "${{ matrix.target }}" in
+            linux) tar -czf dist/gitmarker-linux-x64.tar.gz -C "$(dirname "${{ matrix.artifact }}")" \
+                     --transform 's,^bundle,gitmarker,' bundle ;;
+            apk) cp "${{ matrix.artifact }}" dist/gitmarker-android.apk ;;
+            macos) ditto -c -k --sequesterRsrc --keepParent "${{ matrix.artifact }}" dist/gitmarker-macos.zip ;;
+            ios) ditto -c -k --sequesterRsrc --keepParent "${{ matrix.artifact }}" dist/gitmarker-ios-unsigned.zip ;;
+            windows) pwsh -Command "Compress-Archive -Path '${{ matrix.artifact }}/*' -DestinationPath dist/gitmarker-windows-x64.zip" ;;
+          esac
+      # Installable builds for testing on devices (the iOS app is unsigned);
+      # the release workflow attaches them to a GitHub release.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gitmarker-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

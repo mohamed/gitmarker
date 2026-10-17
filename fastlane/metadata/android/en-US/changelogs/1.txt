@@ -1,0 +1,1 @@
+First release: Keep-style Markdown notes in a Git repository, with sync over HTTPS or SSH, note history, checklists, Markdown and math preview, and Arabic and mixed-script support.

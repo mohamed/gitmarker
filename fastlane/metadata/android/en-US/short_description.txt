@@ -1,0 +1,1 @@
+Markdown notes in the style of Google Keep, stored and synced with Git

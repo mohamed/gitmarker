@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>GitMarker</title>
+  <!-- A Keep-style note holding an "M" for Markdown, drawn as a Git
+       history: commits joined by the history line, newest in orange. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD54F"/>
+      <stop offset="1" stop-color="#F9A825"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#tile)"/>
+  <!-- Note with a folded corner -->
+  <path d="M296 176 H624 L776 328 V800 Q776 848 728 848 H296 Q248 848 248 800 V224 Q248 176 296 176 Z"
+        fill="#FFFFFF"/>
+  <path d="M624 176 V280 Q624 328 672 328 H776 Z" fill="#E6E6E6"/>
+  <!-- The M: a grey history line through five commits -->
+  <path d="M364 704 V400 L512 568 L660 400 V704" fill="none" stroke="#9AA0A6"
+        stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#3C4043">
+    <circle cx="364" cy="704" r="48"/>
+    <circle cx="364" cy="400" r="48"/>
+    <circle cx="512" cy="568" r="48"/>
+    <circle cx="660" cy="400" r="48"/>
+  </g>
+  <circle cx="660" cy="704" r="48" fill="#E37400"/>
+</svg>
