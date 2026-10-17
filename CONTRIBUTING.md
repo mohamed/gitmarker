@@ -108,6 +108,33 @@ executable. Git formats and protocols belong in dargit, not here.
 - `pubspec.lock` is committed, so release builds use the tested dependency
   versions.
 
+## Android signing
+
+Release builds are signed with the upload key from `android/key.properties`:
+
+```properties
+storeFile=upload-keystore.jks     # relative to android/app/
+storePassword=…
+keyAlias=…
+keyPassword=…
+```
+
+Neither that file nor the keystore is ever committed (`android/.gitignore`).
+Without it, `flutter build apk --release` produces an unsigned APK. That is
+what F-Droid builds, since F-Droid signs its builds itself, but an unsigned
+APK cannot be installed, so use `flutter run` (debug) to try changes on a
+phone.
+
+CI signs the APK when the repository has these secrets:
+
+- `ANDROID_KEYSTORE_BASE64`: the keystore, base64-encoded
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+Without them it uploads `gitmarker-android-unsigned.apk`, and releases
+leave the APK out.
+
 ## Icons
 
 The logo is `docs/logo.svg`. After changing it, render the variants and
