@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1
+
+- Android release builds are no longer signed with Flutter's debug key:
+  they are signed with the release key when one is configured, and are
+  unsigned otherwise, as F-Droid expects (it signs its builds itself).
+- Contributor guide (`CONTRIBUTING.md`).
+
 ## 1.0.0
 
 First release.
