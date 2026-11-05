@@ -1,0 +1,1 @@
+Android release builds are no longer signed with the debug key, so F-Droid can sign them. Adds a contributor guide.
