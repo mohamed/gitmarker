@@ -3,7 +3,8 @@ name: Release
 # A release is a tag vX.Y.Z: it must match `version:` in pubspec.yaml and
 # have a "## X.Y.Z" section in CHANGELOG.md. The full CI runs first; its
 # builds are then published as a GitHub release with that section as the
-# notes. The unsigned iOS build is not attached (it cannot be installed).
+# notes. Unsigned builds are not attached (they cannot be installed): the
+# iOS app always, the APK when the repository has no signing secrets.
 on:
   push:
     tags:
@@ -37,6 +38,8 @@ jobs:
   ci:
     needs: check
     uses: ./.github/workflows/ci.yml
+    # The Android upload key, for a signed APK.
+    secrets: inherit
 
   publish:
     needs: [check, ci]
@@ -55,7 +58,7 @@ jobs:
           for f in artifacts/*; do
             name="$(basename "$f")"
             case "$name" in
-              *ios-unsigned*) continue ;;
+              *-unsigned*) continue ;;
             esac
             cp "$f" "release/${name/gitmarker-/GitMarker-$v-}"
           done
